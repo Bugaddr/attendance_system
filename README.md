@@ -1,16 +1,65 @@
-# React + Vite
+# Secure Web-Based Attendance System
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A secure, real-time web-based attendance system designed for educational institutions. Teachers can generate dynamic, time-limited QR codes, and students can check in securely using their smartphones.
 
-Currently, two official plugins are available:
+## Key Features
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- **Dynamic QR Codes**: Time-limited QR codes to prevent unauthorized sharing.
+- **Geofencing & Location Validation**: Ensures students are physically present in the classroom by comparing their GPS coordinates with the teacher's location.
+- **Identity Verification**: Requires photo capture during the check-in process to prevent proxy attendance.
+- **Teacher Dashboard**: Real-time grid-based live attendance cards (similar to Google Meet UI) to monitor active sessions.
+- **Secure Architecture**: Built with modern web technologies and deployed securely on the edge.
 
-## React Compiler
+## Tech Stack
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+- **Frontend**: React, Vite
+- **Maps & Geolocation**: Leaflet (`react-leaflet`)
+- **QR Code Scanning**: HTML5-QRCode
+- **Icons**: Lucide React
+- **Backend & Database**: Cloudflare Pages Functions, Cloudflare D1 (SQLite)
 
-## Expanding the ESLint configuration
+## Setup Instructions
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Prerequisites
+
+- Node.js installed
+- Cloudflare Wrangler CLI (`npm i -g wrangler`)
+
+### Local Development
+
+1. Clone the repository and install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Initialize the local database:
+   ```bash
+   npx wrangler d1 execute attendance-db --local --file=./schema.sql
+   ```
+
+3. Start the development server:
+   ```bash
+   npm run dev
+   ```
+
+### Deployment
+
+1. Create a Cloudflare D1 database:
+   ```bash
+   npx wrangler d1 create attendance-db
+   ```
+   *(Update `wrangler.toml` with the generated database ID if necessary).*
+
+2. Apply the schema to the remote database:
+   ```bash
+   npx wrangler d1 execute attendance-db --remote --file=./schema.sql
+   ```
+
+3. Deploy using the included script:
+   ```bash
+   ./deploy.sh
+   ```
+
+## License
+
+MIT License
