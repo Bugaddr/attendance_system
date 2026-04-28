@@ -55,14 +55,15 @@ export async function onRequest(context) {
 
   if (request.method === 'POST') {
     try {
-      const { sessionId, name, studentId, photoData, studentLat, studentLng } = await request.json();
+      const { sessionId, name, studentId, photoData, studentLat, studentLng, deviceFingerprint } = await request.json();
       
       const session = await db.prepare('SELECT * FROM Sessions WHERE id = ?').bind(sessionId).first();
       if (!session) return Response.json({ error: 'Invalid session' }, { status: 404 });
       if (session.endedAt) return Response.json({ error: 'This attendance session has been closed by the teacher.' }, { status: 403 });
 
       const distance = getDistanceInMeters(session.teacherLat, session.teacherLng, studentLat, studentLng);
-      if (distance > 50) return Response.json({ error: `You are too far from the classroom (${Math.round(distance)}m). You must be within 50 meters.` }, { status: 403 });
+      const maxRange = session.rangeMeters || 10;
+      if (distance > maxRange) return Response.json({ error: `You are too far from the classroom (${Math.round(distance)}m). You must be within ${maxRange} meters.` }, { status: 403 });
 
       // Upsert User
       let user = await db.prepare('SELECT id FROM Users WHERE studentId = ?').bind(studentId).first();
@@ -80,9 +81,17 @@ export async function onRequest(context) {
         .bind(sessionId, userId).first();
       if (existing) return Response.json({ error: 'Attendance already recorded for this ID.' }, { status: 400 });
 
+      if (deviceFingerprint) {
+        const existingDevice = await db.prepare('SELECT id, studentUserId FROM AttendanceRecords WHERE sessionId = ? AND deviceFingerprint = ?')
+          .bind(sessionId, deviceFingerprint).first();
+        if (existingDevice && existingDevice.studentUserId !== userId) {
+          return Response.json({ error: 'Attendance already recorded from this device for another student.' }, { status: 400 });
+        }
+      }
+
       const id = crypto.randomUUID();
-      await db.prepare('INSERT INTO AttendanceRecords (id, sessionId, studentUserId, photoData, studentLat, studentLng, distanceMeters) VALUES (?, ?, ?, ?, ?, ?, ?)')
-        .bind(id, sessionId, userId, photoData, studentLat, studentLng, distance)
+      await db.prepare('INSERT INTO AttendanceRecords (id, sessionId, studentUserId, photoData, studentLat, studentLng, distanceMeters, deviceFingerprint) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        .bind(id, sessionId, userId, photoData, studentLat, studentLng, distance, deviceFingerprint || null)
         .run();
 
       return Response.json({ success: true, distance });

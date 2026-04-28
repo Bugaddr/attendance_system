@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Camera, CheckCircle2, MapPin, Shield, User, Hash } from 'lucide-react';
+import FingerprintJS from '@fingerprintjs/fingerprintjs';
+import { getAccuratePosition } from '../utils/geolocation';
 
 export default function StudentAttendance() {
   const { sessionId } = useParams();
@@ -12,7 +14,6 @@ export default function StudentAttendance() {
   const [name, setName] = useState('');
   const [studentId, setStudentId] = useState('');
 
-  const [location, setLocation] = useState(null);
   const [photoData, setPhotoData] = useState(null);
 
   const videoRef = useRef(null);
@@ -27,14 +28,10 @@ export default function StudentAttendance() {
     setError('');
     setLoading(true);
     try {
-      const pos = await new Promise((resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(resolve, reject, {
-          enableHighAccuracy: true,
-          timeout: 10000,
-          maximumAge: 0
-        });
+      // Quick request to trigger browser permission prompt
+      await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, { maximumAge: 60000, timeout: 5000 });
       });
-      setLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
 
       const stream = await navigator.mediaDevices.getUserMedia({
         video: { facingMode: 'user' },
@@ -85,6 +82,14 @@ export default function StudentAttendance() {
     setError('');
 
     try {
+      // Get device fingerprint
+      const fp = await FingerprintJS.load();
+      const result = await fp.get();
+      const deviceFingerprint = result.visitorId;
+
+      // Get high-accuracy location exactly at submission time (waits up to 10s)
+      const pos = await getAccuratePosition(10000, 15);
+
       const res = await fetch('/api/attendance', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -93,8 +98,9 @@ export default function StudentAttendance() {
           name,
           studentId,
           photoData,
-          studentLat: location.lat,
-          studentLng: location.lng
+          studentLat: pos.coords.latitude,
+          studentLng: pos.coords.longitude,
+          deviceFingerprint
         })
       });
 
@@ -231,7 +237,7 @@ export default function StudentAttendance() {
                   Retake
                 </button>
                 <button type="submit" className="btn btn-success btn-pill" disabled={loading} style={{ flex: 2, padding: '0.75rem' }}>
-                  {loading ? 'Submitting...' : 'Submit Attendance'}
+                  {loading ? 'Getting Location & Submitting...' : 'Submit Attendance'}
                 </button>
               </div>
             </form>

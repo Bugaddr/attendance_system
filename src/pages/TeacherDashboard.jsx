@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import { QRCodeSVG } from 'qrcode.react';
-import { MapPin, QrCode, Users, CheckCircle2, Copy, LogOut, Clock, Download, Plus, ArrowLeft, Eye, Trash2, Navigation } from 'lucide-react';
+import { MapPin, QrCode, Users, CheckCircle2, Copy, LogOut, Clock, Download, Plus, ArrowLeft, Eye, Trash2, Navigation, Ruler } from 'lucide-react';
 import L from 'leaflet';
 import { useAuth } from '../context/AuthContext';
+import { getAccuratePosition } from '../utils/geolocation';
 
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({
@@ -27,6 +28,7 @@ export default function TeacherDashboard() {
   const [isCreating, setIsCreating] = useState(false);
 
   const [position, setPosition] = useState(null);
+  const [geoRange, setGeoRange] = useState(10);
   const [session, setSession] = useState(null);
   const [attendances, setAttendances] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -63,20 +65,17 @@ export default function TeacherDashboard() {
 
   useEffect(() => { fetchHistory(); }, []);
 
-  const useCurrentLocation = () => {
+  const useCurrentLocation = async () => {
     setLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLoading(false);
-      },
-      (err) => {
-        console.error(err);
-        alert("Failed to get current location. Please ensure location permissions are granted.");
-        setLoading(false);
-      },
-      { enableHighAccuracy: true }
-    );
+    try {
+      const pos = await getAccuratePosition(10000, 15);
+      setPosition({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+    } catch (err) {
+      console.error(err);
+      alert("Failed to get high-accuracy current location. Please ensure location permissions are granted or click on the map manually.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const startSession = async () => {
@@ -86,7 +85,7 @@ export default function TeacherDashboard() {
       const res = await fetch('/api/session', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lat: position.lat, lng: position.lng })
+        body: JSON.stringify({ lat: position.lat, lng: position.lng, rangeMeters: geoRange })
       });
       const data = await res.json();
       if (res.ok) { setSession(data); setIsCreating(false); }
@@ -320,6 +319,29 @@ export default function TeacherDashboard() {
               <LocationMarker position={position} setPosition={setPosition} />
             </MapContainer>
           </div>
+
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '0.75rem',
+            padding: '0.75rem 1rem',
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border-subtle)',
+            borderRadius: 'var(--radius-md)',
+            marginBottom: '1.25rem'
+          }}>
+            <Ruler size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
+            <div style={{ flex: 1 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.375rem', alignItems: 'center' }}>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-secondary)' }}>Geofence Range (m)</label>
+              </div>
+              <input
+                type="number" min="1" max="5000" value={geoRange}
+                onChange={e => setGeoRange(Number(e.target.value))}
+                className="input-field"
+                style={{ width: '100%', marginBottom: 0, padding: '0.5rem', fontSize: '0.875rem' }}
+              />
+            </div>
+          </div>
+
           <div className="flex justify-between items-center">
             <button className="btn btn-ghost" onClick={() => setIsCreating(false)}>
               <ArrowLeft size={16} /> Cancel
@@ -340,15 +362,10 @@ export default function TeacherDashboard() {
   /* ──────────── ACTIVE SESSION (Split Layout) ──────────── */
   return (
     <div className="meet-container">
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+      <div className="meet-split">
 
         {/* LEFT: QR Code Panel */}
-        <div style={{
-          width: '380px', minWidth: '320px', flexShrink: 0,
-          borderRight: '1px solid var(--border-default)',
-          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          padding: '2rem', background: 'var(--bg-surface)'
-        }}>
+        <div className="meet-sidebar">
           <div style={{
             display: 'inline-flex', padding: '0.625rem',
             background: 'rgba(99, 102, 241, 0.1)',
@@ -379,7 +396,7 @@ export default function TeacherDashboard() {
         </div>
 
         {/* RIGHT: Live Attendance */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+        <div className="meet-content">
           <div style={{
             padding: '1.25rem 1.5rem',
             borderBottom: '1px solid var(--border-subtle)',
@@ -445,7 +462,7 @@ export default function TeacherDashboard() {
           <span className="text-muted flex items-center gap-1"><Users size={14} /> {attendances.length} joined</span>
         </div>
 
-        <div className="flex gap-2 items-center" style={{ flex: 1, maxWidth: '500px', margin: '0 1.5rem' }}>
+        <div className="meet-bottom-bar-link-wrapper">
           <input type="text" readOnly value={joinUrl} className="input-field"
             style={{ marginBottom: 0, fontSize: '0.8125rem', fontFamily: 'monospace' }} />
           <button className="btn btn-icon" onClick={() => navigator.clipboard.writeText(joinUrl)} title="Copy Link">

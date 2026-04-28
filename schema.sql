@@ -17,6 +17,7 @@ CREATE TABLE Sessions (
   teacherId TEXT NOT NULL,
   teacherLat REAL NOT NULL,
   teacherLng REAL NOT NULL,
+  rangeMeters REAL NOT NULL DEFAULT 10,
   createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   endedAt DATETIME,
   FOREIGN KEY(teacherId) REFERENCES Users(id)
@@ -30,6 +31,7 @@ CREATE TABLE AttendanceRecords (
   studentLat REAL NOT NULL,
   studentLng REAL NOT NULL,
   distanceMeters REAL NOT NULL,
+  deviceFingerprint TEXT,
   createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY(sessionId) REFERENCES Sessions(id),
   FOREIGN KEY(studentUserId) REFERENCES Users(id),

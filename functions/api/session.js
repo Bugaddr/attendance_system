@@ -31,12 +31,13 @@ export async function onRequest(context) {
 
   if (request.method === 'POST') {
     try {
-      const { lat, lng } = await request.json();
+      const { lat, lng, rangeMeters } = await request.json();
+      const range = Math.max(1, Math.min(Number(rangeMeters) || 10, 500));
       const sessionId = generateJoinCode();
-      await db.prepare('INSERT INTO Sessions (id, teacherId, teacherLat, teacherLng) VALUES (?, ?, ?, ?)')
-        .bind(sessionId, payload.id, lat, lng)
+      await db.prepare('INSERT INTO Sessions (id, teacherId, teacherLat, teacherLng, rangeMeters) VALUES (?, ?, ?, ?, ?)')
+        .bind(sessionId, payload.id, lat, lng, range)
         .run();
-      return Response.json({ id: sessionId, lat, lng, createdAt: new Date().toISOString() });
+      return Response.json({ id: sessionId, lat, lng, rangeMeters: range, createdAt: new Date().toISOString() });
     } catch (e) {
       return Response.json({ error: e.message }, { status: 500 });
     }

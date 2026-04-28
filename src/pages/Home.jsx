@@ -53,7 +53,7 @@ export default function Home() {
   };
 
   const features = [
-    { icon: <MapPin size={20} />, title: 'Geofenced', desc: '50m radius verification' },
+    { icon: <MapPin size={20} />, title: 'Geofenced', desc: '10m radius verification' },
     { icon: <Shield size={20} />, title: 'Anti-Proxy', desc: 'Live selfie required' },
     { icon: <Zap size={20} />, title: 'Instant', desc: 'QR code based check-in' }
   ];
@@ -80,14 +80,15 @@ export default function Home() {
           </p>
         </div>
 
-        <div className="flex gap-3 justify-center mb-6">
+        <div className="flex gap-3 justify-center mb-6" style={{ flexWrap: 'wrap' }}>
           {features.map((f, i) => (
             <div key={i} className="text-center" style={{
               padding: '0.75rem',
               background: 'var(--bg-elevated)',
               border: '1px solid var(--border-subtle)',
               borderRadius: 'var(--radius-md)',
-              flex: 1
+              flex: '1 1 100px',
+              minWidth: '100px'
             }}>
               <div style={{ color: 'var(--primary)', marginBottom: '0.375rem', display: 'flex', justifyContent: 'center' }}>{f.icon}</div>
               <div style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-secondary)' }}>{f.title}</div>

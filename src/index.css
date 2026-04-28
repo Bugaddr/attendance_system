@@ -380,6 +380,43 @@ h3 { font-size: 1.125rem; }
   background: var(--bg-dark);
 }
 
+.meet-split {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  flex-direction: row;
+}
+
+.meet-sidebar {
+  width: 380px;
+  min-width: 320px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--border-default);
+  border-bottom: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--bg-surface);
+}
+
+.meet-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.meet-bottom-bar-link-wrapper {
+  flex: 1;
+  max-width: 500px;
+  margin: 0 1.5rem;
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
 .meet-main {
   flex: 1;
   display: flex;
@@ -545,12 +582,48 @@ h3 { font-size: 1.125rem; }
 /* ──────────────────────────────────
    RESPONSIVE
    ────────────────────────────────── */
+@media (max-width: 768px) {
+  .meet-split {
+    flex-direction: column;
+    overflow-y: auto;
+  }
+  .meet-sidebar {
+    width: 100%;
+    min-width: 100%;
+    border-right: none;
+    border-bottom: 1px solid var(--border-default);
+    padding: 1.5rem 1rem;
+  }
+  .meet-content {
+    overflow: visible; /* Let parent scroll */
+  }
+  .meet-bottom-bar {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    padding: 1rem;
+  }
+  .meet-bottom-bar-link-wrapper {
+    margin: 0;
+    max-width: 100%;
+  }
+  .meet-bottom-bar .meet-info {
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .meet-bottom-bar .flex.gap-3 {
+    justify-content: stretch;
+  }
+  .meet-bottom-bar .btn {
+    width: 100%;
+  }
+}
+
 @media (max-width: 640px) {
   .container { padding: 1rem; }
   .page-header { flex-direction: column; gap: 1rem; align-items: flex-start; }
   .page-header .flex { width: 100%; }
   .meet-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 0.75rem; }
-  .meet-bottom-bar { padding: 0.75rem 1rem; }
   .data-table { font-size: 0.8125rem; }
   .data-table thead th, .data-table tbody td { padding: 0.625rem 0.5rem; }
 }
