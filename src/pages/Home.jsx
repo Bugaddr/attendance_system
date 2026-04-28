@@ -23,15 +23,15 @@ export default function Home() {
     setLoading(true);
     setError('');
 
-    if (isLogin) {
-      const res = await login(email, password);
-      if (res.success) {
-        navigate('/teacher');
+    try {
+      if (isLogin) {
+        const res = await login(email, password);
+        if (res.success) {
+          navigate('/teacher');
+        } else {
+          setError(res.error || 'Login failed');
+        }
       } else {
-        setError(res.error);
-      }
-    } else {
-      try {
         const res = await fetch('/api/auth/register', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -45,11 +45,12 @@ export default function Home() {
         } else {
           setError(data.error);
         }
-      } catch (err) {
-        setError('Registration failed');
       }
+    } catch (err) {
+      setError('An unexpected error occurred. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const features = [

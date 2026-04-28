@@ -17,17 +17,22 @@ export function AuthProvider({ children }) {
   }, []);
 
   const login = async (email, password) => {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setUser(data.user);
-      return { success: true };
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data.user);
+        return { success: true };
+      }
+      return { success: false, error: data.error };
+    } catch (err) {
+      console.error(err);
+      return { success: false, error: 'Network error or invalid response. Are you running the backend?' };
     }
-    return { success: false, error: data.error };
   };
 
   const logout = async () => {

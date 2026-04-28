@@ -5,7 +5,13 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: true,
-    port: 5173
+    port: 5173,
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8788',
+        changeOrigin: true
+      }
+    }
   },
   build: {
     chunkSizeWarningLimit: 1000, // Increase warning limit to 1MB
